@@ -1,4 +1,4 @@
-import * as forge from 'node-forge'
+import forge from 'node-forge'
 import * as crypto from 'crypto'
 
 interface DecoSession {
