@@ -1,31 +1,16 @@
-FROM node:22-alpine AS builder
+FROM python:3.13-slim
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-COPY tsconfig.json ./
-COPY src/ ./src/
-COPY server/ ./server/
+COPY server.py ./
 
-RUN npm run build
-
-FROM node:22-alpine
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-COPY --from=builder /app/dist ./dist
-
-RUN addgroup -g 1001 -S deco && \
-    adduser -S deco -u 1001 -G deco
+RUN addgroup --gid 1001 deco && \
+    adduser --disabled-password --uid 1001 --gid 1001 deco
 USER deco
 
 EXPOSE 8086
 
-ENV NODE_ENV=production
-
-CMD ["node", "dist/server/mcp/http-server.js"]
+CMD ["python", "server.py"]
