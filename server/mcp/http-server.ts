@@ -20,6 +20,8 @@ async function main(): Promise<void> {
   const decoClient: DecoClient = await createDecoClient(DECO_HOST, DECO_PASSWORD, DECO_USERNAME)
   console.log('Deco client ready')
 
+  const sessions = new Map<string, { transport: StreamableHTTPServerTransport; server: ReturnType<typeof createMcpServer> }>()
+
   const httpServer = createServer(async (req, res) => {
     if (req.url === '/health') {
       res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -28,14 +30,28 @@ async function main(): Promise<void> {
     }
 
     if (req.url === '/mcp') {
+      // Check for existing session
+      const sessionId = req.headers['mcp-session-id'] as string | undefined
+      if (sessionId && sessions.has(sessionId)) {
+        const session = sessions.get(sessionId)!
+        await session.transport.handleRequest(req, res)
+        return
+      }
+
+      // New session (initialize request)
       const server = createMcpServer(decoClient)
       const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => crypto.randomUUID() })
       await server.connect(transport as unknown as Transport)
+
+      transport.onclose = () => {
+        if (transport.sessionId) sessions.delete(transport.sessionId)
+      }
+
       await transport.handleRequest(req, res)
-      res.on('close', () => {
-        transport.close().catch(() => {})
-        server.close().catch(() => {})
-      })
+
+      if (transport.sessionId) {
+        sessions.set(transport.sessionId, { transport, server })
+      }
       return
     }
 
