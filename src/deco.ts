@@ -123,7 +123,9 @@ export async function createDecoClient(
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: params
     })
-    return response.json()
+    const text = await response.text()
+    console.log(`[DEBUG] POST ${url.replace(host, '')} status=${response.status} body=${text.substring(0, 500)}`)
+    return JSON.parse(text)
   }
 
   async function authenticate(): Promise<void> {
@@ -172,7 +174,9 @@ export async function createDecoClient(
     const sysauthMatch = setCookie.match(/sysauth=([^;]+)/)
     const sysauth = sysauthMatch?.[1] ?? ''
 
-    const loginJson = await loginResp.json() as DecoApiResponse
+    const loginText = await loginResp.text()
+    console.log(`[DEBUG] Login status=${loginResp.status} cookie=${setCookie.substring(0, 80)} body=${loginText.substring(0, 500)}`)
+    const loginJson = JSON.parse(loginText) as DecoApiResponse
     if (loginJson.error_code !== 0) {
       throw new Error(`Login failed: error_code=${loginJson.error_code}`)
     }
@@ -214,7 +218,9 @@ export async function createDecoClient(
       body: `sign=${encodeURIComponent(sign)}&data=${encodeURIComponent(encryptedData)}`
     })
 
-    const json = await resp.json() as DecoApiResponse
+    const respText = await resp.text()
+    console.log(`[DEBUG] Request ${path} status=${resp.status} body=${respText.substring(0, 500)}`)
+    const json = JSON.parse(respText) as DecoApiResponse
 
     if (json.error_code === -5) {
       session = null
