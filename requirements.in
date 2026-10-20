@@ -1,0 +1,5 @@
+mcp>=1.0.0,<2
+tplinkrouterc6u>=5.0.0
+msgpack>=1.2.1
+urllib3>=2.8.0
+setuptools>=78.1.1
