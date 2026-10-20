@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+docker run --rm --network none --entrypoint python "$1" -c 'import importlib.util; assert importlib.util.find_spec("pip") is None'
 docker run --rm -i --network none -e DECO_HOST=http://127.0.0.1:9 -e DECO_PASSWORD=ci-fixture --entrypoint python "$1" - <<'PYTEST'
 import server,json
 from unittest.mock import Mock
