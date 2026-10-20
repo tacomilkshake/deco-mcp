@@ -1,2 +1,2 @@
-mcp>=1.0.0,<2
+mcp>=2.3.0,<3
 tplinkrouterc6u>=5.0.0
